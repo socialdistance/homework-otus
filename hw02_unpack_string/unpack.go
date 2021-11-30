@@ -10,56 +10,50 @@ import (
 var ErrInvalidString = errors.New("invalid string")
 
 func Unpack(s string) (string, error) {
-	var result, res, letter string
-
 	var b strings.Builder
+	runes := []rune(s)
 
-	for i, r := range s {
+	for i, r := range runes {
 		switch {
-		case unicode.IsDigit(r) && i == 0:
-			return "", ErrInvalidString
-
-		case unicode.IsDigit(rune(s[i])) && unicode.IsDigit(rune(s[i+1])):
-			return "", ErrInvalidString
-
 		case unicode.IsDigit(r):
-			outRune := []rune(s)
+			if unicode.IsDigit(r) && i == 0 {
+				return "", ErrInvalidString
+			}
+
 			count, err := strconv.Atoi(string(r))
 			if err != nil {
 				return "", err
 			}
+
 			if count == 0 {
-				res = strings.Replace(string(outRune), string(outRune[i-1]), "", 1)
-				letter = strings.Replace(res, string(outRune[i]), "", 1)
-				return letter, nil
+				if unicode.IsDigit(runes[i]) && unicode.IsDigit(runes[i-1]) {
+					return "", ErrInvalidString
+				}
+				letter := strings.Replace(string(runes), string(runes[i]), "", 1)
+				res := strings.Replace(letter, string(runes[i-1]), "", 1)
+				return res, nil
 			}
 
-			if count != 0 {
-				res = strings.Repeat(string(outRune[i-1]), count-1)
-				b.WriteString(res)
+			for idx := 0; idx < count-1; idx++ {
+				b.WriteRune(runes[i-1])
 			}
 
-		case r == '\\' && string(s[i+2]) == "\\":
-			outRune := []rune(s)
-			res = strings.Replace(string(outRune), string(outRune[i]), "", 1)
-			letter = strings.Replace(res, string(outRune[i+2]), "", 1)
+		case r == '\\' && string(runes[i+2]) == "\\":
+			res := strings.Replace(string(runes), string(runes[i]), "", 1)
+			letter := strings.Replace(res, string(runes[i+2]), "", 1)
 			return letter, nil
 
-		case r == '\\' && unicode.IsDigit(rune(s[i+2])):
-			outRune := []rune(s)
-			count, err := strconv.Atoi(string(s[i+2]))
+		case r == '\\' && unicode.IsDigit(runes[i+2]):
+			count, err := strconv.Atoi(string(runes[i+2]))
 			if err != nil {
 				return "", err
 			}
-			res = strings.Repeat(string(outRune[i+1]), count)
+			res := strings.Repeat(string(runes[i+1]), count)
 			b.WriteString(res)
-			result = b.String()
+			result := b.String()
 			return result, nil
 
 		case r == '"':
-			return "", ErrInvalidString
-
-		case string(r) == "\n":
 			return "", ErrInvalidString
 
 		default:
@@ -67,7 +61,5 @@ func Unpack(s string) (string, error) {
 		}
 	}
 
-	result = b.String()
-
-	return result, nil
+	return b.String(), nil
 }
