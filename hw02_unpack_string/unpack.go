@@ -23,32 +23,35 @@ func Unpack(s string) (string, error) {
 			return "", ErrInvalidString
 
 		case unicode.IsDigit(r):
+			outRune := []rune(s)
 			count, err := strconv.Atoi(string(r))
 			if err != nil {
 				return "", err
 			}
 			if count == 0 {
-				res = strings.Replace(s, string(s[i-1]), "", 1)
-				letter = strings.Replace(res, string(s[i]), "", 1)
+				res = strings.Replace(string(outRune), string(outRune[i-1]), "", 1)
+				letter = strings.Replace(res, string(outRune[i]), "", 1)
 				return letter, nil
 			}
 
 			if count != 0 {
-				res = strings.Repeat(string(s[i-1]), count-1)
+				res = strings.Repeat(string(outRune[i-1]), count-1)
 				b.WriteString(res)
 			}
 
 		case r == '\\' && string(s[i+2]) == "\\":
-			res = strings.Replace(s, string(s[i]), "", 1)
-			letter = strings.Replace(res, string(s[i+2]), "", 1)
+			outRune := []rune(s)
+			res = strings.Replace(string(outRune), string(outRune[i]), "", 1)
+			letter = strings.Replace(res, string(outRune[i+2]), "", 1)
 			return letter, nil
 
 		case r == '\\' && unicode.IsDigit(rune(s[i+2])):
+			outRune := []rune(s)
 			count, err := strconv.Atoi(string(s[i+2]))
 			if err != nil {
 				return "", err
 			}
-			res = strings.Repeat(string(s[i+1]), count)
+			res = strings.Repeat(string(outRune[i+1]), count)
 			b.WriteString(res)
 			result = b.String()
 			return result, nil
