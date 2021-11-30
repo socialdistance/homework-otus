@@ -23,7 +23,10 @@ func Unpack(s string) (string, error) {
 			return "", ErrInvalidString
 
 		case unicode.IsDigit(r):
-			count, _ := strconv.Atoi(string(r))
+			count, err := strconv.Atoi(string(r))
+			if err != nil {
+				return "", err
+			}
 			if count == 0 {
 				res = strings.Replace(s, string(s[i-1]), "", 1)
 				letter = strings.Replace(res, string(s[i]), "", 1)
@@ -41,13 +44,23 @@ func Unpack(s string) (string, error) {
 			return letter, nil
 
 		case r == '\\' && unicode.IsDigit(rune(s[i+2])):
-			count, _ := strconv.Atoi(string(s[i+2]))
+			count, err := strconv.Atoi(string(s[i+2]))
+			if err != nil {
+				return "", err
+			}
 			res = strings.Repeat(string(s[i+1]), count)
 			b.WriteString(res)
 			result = b.String()
 			return result, nil
+
+		case r == '"':
+			return "", ErrInvalidString
+
+		case string(r) == "\n":
+			return "", ErrInvalidString
+
 		default:
-			b.WriteString(string(r))
+			b.WriteRune(r)
 		}
 	}
 
