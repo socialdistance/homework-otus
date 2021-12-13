@@ -23,12 +23,7 @@ func Top10(s string) []string {
 	sorted := make([]string, 0, 10)
 
 	for _, word := range input {
-		_, matched := counter[word]
-		if matched {
-			counter[word]++
-		} else {
-			counter[word] = 1
-		}
+		counter[word]++
 	}
 
 	for k, v := range counter {
@@ -62,7 +57,7 @@ func Top10Asterisk(s string) []string {
 		return []string{}
 	}
 
-	ssAsterisk := make([]Counter, 0, len(s))
+	ssAsterisk := make([]Counter, 0, 10)
 
 	input := strings.ToLower(s)
 	counter := make(map[string]int)
