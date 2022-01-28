@@ -8,7 +8,7 @@ type (
 
 type Stage func(in In) (out Out)
 
-func worker(done In, outChannel In, stage Stage) Out {
+func worker(done In, outChannel In) Out {
 	bindChannel := make(Bi)
 	go func() {
 		defer close(bindChannel)
@@ -25,13 +25,13 @@ func worker(done In, outChannel In, stage Stage) Out {
 		}
 	}()
 
-	return stage(bindChannel)
+	return bindChannel
 }
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	outChannel := in
 	for _, stage := range stages {
-		outChannel = worker(done, outChannel, stage)
+		outChannel = stage(worker(done, outChannel))
 	}
 
 	return outChannel
