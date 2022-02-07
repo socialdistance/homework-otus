@@ -75,7 +75,8 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 
 	_, err = io.CopyN(fileWrite, proxy, limit)
 	if err != nil && !errors.Is(err, io.EOF) {
-		return err
+		return ErrCopyFile
 	}
-	return ErrCopyFile
+
+	return nil
 }
