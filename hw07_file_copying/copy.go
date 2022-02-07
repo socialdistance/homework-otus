@@ -30,23 +30,23 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return ErrInvalidLimit
 	}
 
-	bytes, err := os.Stat(fromPath)
+	info, err := os.Stat(fromPath)
 	if err != nil {
 		return ErrInvalidFile
 	}
 
-	if bytes.IsDir() {
+	if info.IsDir() {
 		return ErrInvalidFile
 	}
-	if bytes.Size() < 1 {
+	if info.Size() < 1 {
 		return ErrUnsupportedFile
 	}
 
-	if offset > bytes.Size() {
+	if offset > info.Size() {
 		return ErrOffsetExceedsFileSize
 	}
 	if limit == 0 {
-		limit = bytes.Size()
+		limit = info.Size()
 	}
 
 	file, err := os.OpenFile(fromPath, os.O_RDONLY, 0o777)
@@ -56,16 +56,16 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 
 	defer file.Close()
 
+	_, err = file.Seek(offset, 0)
+	if err != nil {
+		return ErrSeek
+	}
+
 	fileWrite, err := os.Create(toPath)
 	if err != nil {
 		return ErrCreateFile
 	}
 	defer fileWrite.Close()
-
-	_, err = file.Seek(offset, 0)
-	if err != nil {
-		return ErrSeek
-	}
 
 	bar := pb.New(int(limit))
 	bar.SetRefreshRate(time.Millisecond * 100)
@@ -74,12 +74,8 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	proxy := bar.NewProxyReader(file)
 
 	_, err = io.CopyN(fileWrite, proxy, limit)
-	if errors.Is(err, io.EOF) {
-		return nil
+	if err != nil && !errors.Is(err, io.EOF) {
+		return err
 	}
-	if errors.Is(err, nil) {
-		return nil
-	}
-
 	return ErrCopyFile
 }
