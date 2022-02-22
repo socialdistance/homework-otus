@@ -29,26 +29,6 @@ func TestGetDomainStat(t *testing.T) {
 {"Id":4,"Name":"Gregory Reid","Username":"tButler","Email":"5Moore@Teklist.net","Phone":"520-04-16","Password":"r639qLNu","Address":"Sunfield Park 20"}
 {"Id":5,"Name":"Janice Rose","Username":"KeithHart","Email":"nulla@Linktype.com","Phone":"146-91-01","Password":"acSBF5","Address":"Russell Trail 61"}`
 
-	dataError := `{{"Id":1,"Name":"Howard Mendoza","Username":"0Oliver","Email":"aliquid_qui_ea@Browsedrive.gov","Phone":"6-866-899-36-79","Password":"InAQJvsq","Address":"Blackbird Place 25"}`
-
-	dataAndError := `{"Id":1,"Name":"Howard Mendoza","Username":"0Oliver","Email":"aliquid_qui_ea@Browsedrive.gov","Phone":"6-866-899-36-79","Password":"InAQJvsq","Address":"Blackbird Place 25"}
-{{"Id":1,"Name":"Howard Mendoza","Username":"0Oliver","Email":"aliquid_qui_ea@Browsedrive.gov","Phone":"6-866-899-36-79","Password":"InAQJvsq","Address":"Blackbird Place 25"}`
-
-	t.Run("data with error", func(t *testing.T) {
-		_, err := GetDomainStat(bytes.NewBufferString(dataError), "gov")
-		require.Error(t, err)
-	})
-
-	t.Run("error test", func(t *testing.T) {
-		_, err := GetDomainStat(bytes.NewBufferString(dataAndError), "gov")
-		require.Error(t, err)
-	})
-
-	t.Run("no error", func(t *testing.T) {
-		_, err := GetDomainStat(bytes.NewBufferString(dataAndError), "com")
-		require.NoError(t, err)
-	})
-
 	t.Run("find 'com'", func(t *testing.T) {
 		result, err := GetDomainStat(bytes.NewBufferString(data), "com")
 		require.NoError(t, err)
