@@ -12,7 +12,6 @@ import (
 	internalapp "github.com/socialdistance/hw12_13_14_15_calendar/internal/app"
 	internalconfig "github.com/socialdistance/hw12_13_14_15_calendar/internal/config"
 	internallogger "github.com/socialdistance/hw12_13_14_15_calendar/internal/logger"
-	internalgrpc "github.com/socialdistance/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/socialdistance/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/socialdistance/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/socialdistance/hw12_13_14_15_calendar/internal/storage/sql"
@@ -50,14 +49,6 @@ func main() {
 	calendar := internalapp.New(logg, store)
 
 	server := internalhttp.NewServer(logg, calendar, config.HTTP.Host, config.HTTP.Port)
-	grpc := internalgrpc.NewServer(logg, calendar, config.GRPC.Host, config.GRPC.Port)
-
-	go func() {
-		<-ctx.Done()
-		grpc.Stop()
-	}()
-
-	go grpc.Start()
 
 	go func() {
 		<-ctx.Done()
