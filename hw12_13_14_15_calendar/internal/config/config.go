@@ -11,6 +11,7 @@ type Config struct {
 	Logger  LoggerConf
 	Storage StorageConf
 	HTTP    HTTPConf
+	GRPC    GRPCConf
 }
 
 type (
@@ -37,7 +38,12 @@ const (
 
 type StorageConf struct {
 	Type Storage
-	URL  Storage
+	URL  string
+}
+
+type GRPCConf struct {
+	Host string
+	Port string
 }
 
 type HTTPConf struct {

@@ -9,11 +9,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/socialdistance/hw12_13_14_15_calendar/internal/app"
+	internalapp "github.com/socialdistance/hw12_13_14_15_calendar/internal/app"
 	internalconfig "github.com/socialdistance/hw12_13_14_15_calendar/internal/config"
 	internallogger "github.com/socialdistance/hw12_13_14_15_calendar/internal/logger"
+	internalgrpc "github.com/socialdistance/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/socialdistance/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/socialdistance/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/socialdistance/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 var configFile string
@@ -40,14 +42,22 @@ func main() {
 		log.Fatalf("Failed logger %s", err)
 	}
 
-	storage := memorystorage.New()
-	calendar := app.New(logg, storage)
-
-	server := internalhttp.NewServer(logg, calendar, config.HTTP.Host, config.HTTP.Port)
-
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
+
+	store := CreateStorage(ctx, *config)
+	calendar := internalapp.New(logg, store)
+
+	server := internalhttp.NewServer(logg, calendar, config.HTTP.Host, config.HTTP.Port)
+	grpc := internalgrpc.NewServer(logg, calendar, config.GRPC.Host, config.GRPC.Port)
+
+	go func() {
+		<-ctx.Done()
+		grpc.Stop()
+	}()
+
+	go grpc.Start()
 
 	go func() {
 		<-ctx.Done()
@@ -67,4 +77,24 @@ func main() {
 		cancel()
 		os.Exit(1) //nolint:gocritic
 	}
+}
+
+func CreateStorage(ctx context.Context, config internalconfig.Config) internalapp.Storage {
+	var store internalapp.Storage
+
+	switch config.Storage.Type {
+	case internalconfig.InMemmory:
+		store = memorystorage.New()
+	case internalconfig.SQL:
+		sqlStore := sqlstorage.New(ctx, config.Storage.URL)
+		err := sqlStore.Connect(ctx)
+		if err != nil {
+			log.Fatalf("Unable to connect database: %s", err)
+		}
+		store = sqlStore
+	default:
+		log.Fatalf("Dont know type storage: %s", config.Storage.Type)
+	}
+
+	return store
 }

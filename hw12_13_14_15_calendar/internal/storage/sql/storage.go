@@ -24,10 +24,10 @@ func New(ctx context.Context, url string) *Storage {
 	}
 }
 
-func (s *Storage) Connect(ctx context.Context, url string) error {
-	conn, err := pgx.Connect(ctx, url)
+func (s *Storage) Connect(ctx context.Context) error {
+	conn, err := pgx.Connect(ctx, s.url)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "unable to connect database %s", err)
+		fmt.Fprintf(os.Stderr, "Unable to connect database %s", err)
 		os.Exit(1)
 	}
 

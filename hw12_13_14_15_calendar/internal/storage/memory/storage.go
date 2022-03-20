@@ -63,5 +63,3 @@ func New() *Storage {
 		events: make(map[uuid.UUID]storage.Event),
 	}
 }
-
-// TODO
