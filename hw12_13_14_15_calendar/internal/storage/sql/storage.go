@@ -41,22 +41,22 @@ func (s *Storage) Close(ctx context.Context) error {
 
 func (s *Storage) Create(evt storage.Event) error {
 	sql := `
-		INSERT INTO events (id, title, started, end, description, user_id) VALUES 
+		INSERT INTO events (id, title, started, ended, description, user_id) VALUES 
 		($1, $2, $3, $4, $5, $6)
 	`
 
 	_, err := s.conn.Exec(s.ctx, sql, evt.ID.String(), evt.Title, evt.Started.Format(time.RFC3339),
-		evt.End.Format(time.RFC3339), evt.Description, evt.UserID)
+		evt.Ended.Format(time.RFC3339), evt.Description, evt.UserID)
 	return err
 }
 
 func (s *Storage) Update(evt storage.Event) error {
 	sql := `
-		UPDATE events SET title=$2, started=$3, end=$4, description=$5 where id=$1
+		UPDATE events SET title=$2, started=$3, ended=$4, description=$5, user_id=$6 WHERE id=$1
 	`
 
 	_, err := s.conn.Exec(s.ctx, sql, evt.ID.String(), evt.Title, evt.Started.Format(time.RFC3339),
-		evt.End.Format(time.RFC3339), evt.Description, evt.UserID)
+		evt.Ended.Format(time.RFC3339), evt.Description, evt.UserID)
 
 	return err
 }
@@ -75,7 +75,7 @@ func (s *Storage) FindAll() ([]storage.Event, error) {
 	events := make([]storage.Event, 0)
 
 	sql := `
-		SELECT id, title, started, end, description, user_id from events ORDER BY date
+		SELECT id, title, started, ended, description, user_id FROM events
 	`
 
 	rows, err := s.conn.Query(s.ctx, sql)
@@ -86,7 +86,7 @@ func (s *Storage) FindAll() ([]storage.Event, error) {
 
 	for rows.Next() {
 		var evt storage.Event
-		if err := rows.Scan(&evt.ID, &evt.Title, &evt.Started, &evt.End, &evt.Description, &evt.UserID); err != nil {
+		if err := rows.Scan(&evt.ID, &evt.Title, &evt.Started, &evt.Ended, &evt.Description, &evt.UserID); err != nil {
 			return nil, fmt.Errorf("cant convert result: %w", err)
 		}
 

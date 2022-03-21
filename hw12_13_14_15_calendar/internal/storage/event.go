@@ -16,17 +16,17 @@ type Event struct {
 	ID          uuid.UUID
 	Title       string
 	Started     time.Time
-	End         time.Time
+	Ended       time.Time
 	Description string
 	UserID      uuid.UUID
 }
 
-func NewEvent(title string, started, end time.Time, description string, userID uuid.UUID) *Event {
+func NewEvent(title string, started, ended time.Time, description string, userID uuid.UUID) *Event {
 	return &Event{
 		ID:          uuid.New(),
 		Title:       title,
 		Started:     started,
-		End:         end,
+		Ended:       ended,
 		Description: description,
 		UserID:      userID,
 	}
