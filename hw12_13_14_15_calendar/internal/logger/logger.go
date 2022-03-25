@@ -15,8 +15,8 @@ type Logger struct {
 	logger *logrus.Logger
 }
 
-func (l *Logger) Debug(msg string, params ...interface{}) {
-	l.logger.Debugf(msg, params...)
+func (l *Logger) Debug(message string, params ...interface{}) {
+	l.logger.Debugf(message, params...)
 }
 
 func (l *Logger) Info(msg string, params ...interface{}) {
@@ -59,7 +59,7 @@ func New(loggerConf config.LoggerConf) (*Logger, error) {
 		return nil, fmt.Errorf("failed parse level %w", err)
 	}
 
-	logrus.SetLevel(logLevel)
+	logger.SetLevel(logLevel)
 
 	logger.SetFormatter(&logrus.JSONFormatter{})
 

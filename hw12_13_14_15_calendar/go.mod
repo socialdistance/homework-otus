@@ -2,8 +2,10 @@ module github.com/socialdistance/hw12_13_14_15_calendar
 
 go 1.16
 
+require github.com/google/uuid v1.3.0
+
 require (
-	github.com/google/uuid v1.3.0
+	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgx/v4 v4.15.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
