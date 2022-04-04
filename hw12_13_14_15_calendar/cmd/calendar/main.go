@@ -3,21 +3,24 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	internalapp "github.com/socialdistance/hw12_13_14_15_calendar/internal/app"
+	internalconfig "github.com/socialdistance/hw12_13_14_15_calendar/internal/config"
+	internallogger "github.com/socialdistance/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/socialdistance/hw12_13_14_15_calendar/internal/server/http"
+	memorystorage "github.com/socialdistance/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/socialdistance/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "configs/config.yaml", "Path to configuration file")
 }
 
 func main() {
@@ -28,17 +31,24 @@ func main() {
 		return
 	}
 
-	config := NewConfig()
-	logg := logger.New(config.Logger.Level)
+	config, err := internalconfig.LoadConfig(configFile)
+	if err != nil {
+		log.Fatalf("Failed load config %s", err)
+	}
 
-	storage := memorystorage.New()
-	calendar := app.New(logg, storage)
-
-	server := internalhttp.NewServer(logg, calendar)
+	logg, err := internallogger.New(config.Logger)
+	if err != nil {
+		log.Fatalf("Failed logger %s", err)
+	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
+
+	store := CreateStorage(ctx, *config)
+	calendar := internalapp.New(logg, store)
+
+	server := internalhttp.NewServer(logg, calendar, config.HTTP.Host, config.HTTP.Port)
 
 	go func() {
 		<-ctx.Done()
@@ -58,4 +68,24 @@ func main() {
 		cancel()
 		os.Exit(1) //nolint:gocritic
 	}
+}
+
+func CreateStorage(ctx context.Context, config internalconfig.Config) internalapp.Storage {
+	var store internalapp.Storage
+
+	switch config.Storage.Type {
+	case internalconfig.InMemmory:
+		store = memorystorage.New()
+	case internalconfig.SQL:
+		sqlStore := sqlstorage.New(ctx, config.Storage.URL)
+		err := sqlStore.Connect(ctx)
+		if err != nil {
+			log.Fatalf("Unable to connect database: %s", err)
+		}
+		store = sqlStore
+	default:
+		log.Fatalf("Dont know type storage: %s", config.Storage.Type)
+	}
+
+	return store
 }
