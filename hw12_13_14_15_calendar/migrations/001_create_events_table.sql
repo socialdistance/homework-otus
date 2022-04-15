@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS events
     started     timestamp not null,
     ended       timestamp not null,
     description text      not null default '',
-    user_id     uuid      not null
+    user_id     uuid      not null,
+    notify      time      not null
 );
 
 -- +goose Down

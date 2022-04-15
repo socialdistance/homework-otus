@@ -15,6 +15,7 @@ type EventDto struct {
 	Ended       string `json:"ended"`
 	Description string `json:"description"`
 	UserID      string `json:"userID"` // nolint:tagliatelle
+	Notify      string `json:"notify"`
 }
 
 type ErrorDto struct {
@@ -33,6 +34,11 @@ func (e *EventDto) GetModel() (*storage.Event, error) {
 		return nil, fmt.Errorf("error: End exprected to be 'yyyy-mm-dd hh:mm:ss', got: %s, %w", e.Ended, err)
 	}
 
+	notify, err := time.Parse("2006-01-02 15:04:00", e.Notify)
+	if err != nil {
+		return nil, fmt.Errorf("error: End exprected to be 'yyyy-mm-dd hh:mm:ss', got: %s, %w", e.Ended, err)
+	}
+
 	id, err := uuid.Parse(e.ID)
 	if err != nil {
 		return nil, fmt.Errorf("ID exprected to be uuid, got: %s, %w", e.ID, err)
@@ -43,7 +49,7 @@ func (e *EventDto) GetModel() (*storage.Event, error) {
 		return nil, fmt.Errorf("userID exprected to be uuid, got: %s, %w", e.UserID, err)
 	}
 
-	appEvent := storage.NewEvent(e.Title, started, ended, e.Description, userID)
+	appEvent := storage.NewEvent(e.Title, started, ended, e.Description, userID, notify)
 	appEvent.ID = id
 
 	return appEvent, nil
@@ -57,6 +63,7 @@ func CreateDto(event storage.Event) EventDto {
 		Ended:       event.Ended.Format(time.RFC3339),
 		Description: event.Description,
 		UserID:      event.UserID.String(),
+		Notify:      event.Notify.Format(time.RFC3339),
 	}
 
 	return eventDto

@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/socialdistance/hw12_13_14_15_calendar/internal/storage"
@@ -23,6 +24,7 @@ type Storage interface {
 	Create(e storage.Event) error
 	Update(e storage.Event) error
 	Delete(id uuid.UUID) error
+	Find(id uuid.UUID) (*storage.Event, error)
 	FindAll() ([]storage.Event, error)
 }
 
@@ -68,4 +70,40 @@ func (a *App) DeleteEvent(ctx context.Context, id uuid.UUID) error {
 
 func (a *App) FindAllEvent(ctx context.Context) ([]storage.Event, error) {
 	return a.Storage.FindAll()
+}
+
+func (a *App) EventsInterval(ctx context.Context, day time.Time, interval time.Duration) ([]storage.Event, error) {
+	var events []storage.Event
+
+	day = day.Truncate(time.Minute * 1440)
+	a.Logger.Debug("App.EventsInterval from %s, interval %s", day, interval)
+
+	allEvents, err := a.Storage.FindAll()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, t := range allEvents {
+		difference := t.Started.Sub(day)
+		if difference >= 0 && difference < interval {
+			events = append(events, t)
+		}
+	}
+
+	return events, nil
+}
+
+func (a *App) EventsByDay(ctx context.Context, day time.Time) ([]storage.Event, error) {
+	end := day.AddDate(0, 0, 1)
+	return a.EventsInterval(ctx, day, end.Sub(day))
+}
+
+func (a *App) EventsByWeek(ctx context.Context, day time.Time) ([]storage.Event, error) {
+	end := day.AddDate(0, 0, 7)
+	return a.EventsInterval(ctx, day, end.Sub(day))
+}
+
+func (a *App) EventsByMonth(ctx context.Context, day time.Time) ([]storage.Event, error) {
+	end := day.AddDate(0, 1, 0)
+	return a.EventsInterval(ctx, day, end.Sub(day))
 }

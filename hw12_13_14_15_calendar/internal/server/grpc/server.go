@@ -1,6 +1,6 @@
 //go:generate protoc --go_out=. --go-grpc_out=. ../../../api/EventService.proto --proto_path=../../../api
 
-package internalgrpc
+package internalising
 
 import (
 	"context"
@@ -32,8 +32,6 @@ type Logger interface {
 	LogHTTP(r *http.Request, code, length int)
 }
 
-type Application interface{}
-
 func NewServerLogger(logger Logger) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
@@ -46,7 +44,7 @@ func NewServerLogger(logger Logger) grpc.UnaryServerInterceptor {
 	}
 }
 
-func NewServer(logger Logger, app Application, host, port string) *Server {
+func NewServer(logger Logger, host, port string) *Server {
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(NewServerLogger(logger)),
 	)
@@ -71,12 +69,10 @@ func (s *Server) Start() error {
 
 	s.logger.Info("[+] Start GRPC Server %s:%s", s.host, s.port)
 
-	err = s.grpcServer.Serve(lsn)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.grpcServer.Serve(lsn)
+	// if err != nil {
+	//	return err
+	//}
 }
 
 func (s *Server) Stop() {
@@ -107,13 +103,17 @@ func (s *Server) Create(ctx context.Context, in *Event) (*ResponseEvent, error) 
 	}
 	appEvt.Started = started
 
-	ended, err := time.Parse("2006-01-02 15:04:05", in.GetStarted())
+	ended, err := time.Parse("2006-01-02 15:04:05", in.GetEnded())
 	if err != nil {
 		return nil, fmt.Errorf("invalid ended value. Exprected 2006-01-02 15:04:05, got %s, %w", in.GetId(), err)
 	}
 	appEvt.Ended = ended
 
-	fmt.Println(appEvt)
+	notify, err := time.Parse("2006-01-02 15:04:05", in.GetNotify())
+	if err != nil {
+		return nil, fmt.Errorf("invalid ended value. Exprected 2006-01-02 15:04:05, got %s, %w", in.GetId(), err)
+	}
+	appEvt.Notify = notify
 
 	err = s.app.CreateEvent(ctx, appEvt)
 	if err != nil {
@@ -155,23 +155,71 @@ func (s *Server) Update(ctx context.Context, in *Event) (*ResponseEvent, error) 
 	}
 	appEvt.UserID = userID
 
-	started, err := time.Parse("2006-01-02 15:04:05", in.GetStarted())
+	started, err := time.Parse("2006-02-03 15:04:05", in.GetStarted())
 	if err != nil {
 		return nil, fmt.Errorf("invalid started value. Exprected 2006-01-02 15:04:05, got %s, %w", in.GetId(), err)
 	}
 	appEvt.Started = started
 
-	ended, err := time.Parse("2006-01-02 15:04:05", in.GetStarted())
+	ended, err := time.Parse("2006-02-04 15:04:05", in.GetEnded())
 	if err != nil {
 		return nil, fmt.Errorf("invalid ended value. Exprected 2006-01-02 15:04:05, got %s, %w", in.GetId(), err)
 	}
 	appEvt.Ended = ended
+
+	notify, err := time.Parse("2006-01-0215:04:05", in.GetNotify())
+	if err != nil {
+		return nil, fmt.Errorf("invalid ended value. Exprected 2006-01-02 15:04:05, got %s, %w", in.GetId(), err)
+	}
+	appEvt.Notify = notify
 
 	if err = s.app.UpdateEvent(ctx, appEvt); err != nil {
 		return ResponseError(err.Error()), nil
 	}
 
 	return ResponseSuccess(), nil
+}
+
+func (s *Server) EventsByDay(ctx context.Context, in *Event) (*ResponseEventList, error) {
+	start, err := time.Parse("2006-02-03 15:04:05", in.GetStarted())
+	if err != nil {
+		return nil, fmt.Errorf("invalid date value. Expected yyyy-mm-dd, got %s", in.GetStarted())
+	}
+
+	events, err := s.app.EventsByDay(ctx, start)
+	if err != nil {
+		return nil, err
+	}
+
+	return ListResponse(events), nil
+}
+
+func (s *Server) EventsByWeek(ctx context.Context, in *Event) (*ResponseEventList, error) {
+	start, err := time.Parse("2006-02-03 15:04:05", in.GetStarted())
+	if err != nil {
+		return nil, fmt.Errorf("invalid date value. Expected yyyy-mm-dd, got %s", in.GetStarted())
+	}
+
+	events, err := s.app.EventsByWeek(ctx, start)
+	if err != nil {
+		return nil, err
+	}
+
+	return ListResponse(events), nil
+}
+
+func (s *Server) EventsByMonth(ctx context.Context, in *Event) (*ResponseEventList, error) {
+	start, err := time.Parse("2006-02-03 15:04:05", in.GetStarted())
+	if err != nil {
+		return nil, fmt.Errorf("invalid date value. Expected yyyy-mm-dd, got %s", in.GetStarted())
+	}
+
+	events, err := s.app.EventsByMonth(ctx, start)
+	if err != nil {
+		return nil, err
+	}
+
+	return ListResponse(events), nil
 }
 
 func ListResponse(evts []storage.Event) *ResponseEventList {
@@ -184,6 +232,7 @@ func ListResponse(evts []storage.Event) *ResponseEventList {
 			Ended:       t.Ended.Format(time.RFC3339),
 			Description: t.Description,
 			UserID:      t.UserID.String(),
+			Notify:      t.Notify.Format(time.RFC3339),
 		})
 	}
 

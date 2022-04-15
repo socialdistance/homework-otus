@@ -49,11 +49,13 @@ func Routers(app *app.App) http.Handler {
 	handlers := NewServerHandlers(app)
 
 	r := mux.NewRouter()
-	r.HandleFunc("/", handlers.HelloWorld).Methods("GET")
 	r.HandleFunc("/create", handlers.CreateEvent).Methods("POST")
 	r.HandleFunc("/events/update/{id}", handlers.UpdateEvent).Methods("PUT")
 	r.HandleFunc("/events/delete/{id}", handlers.DeleteEvent).Methods("DELETE")
 	r.HandleFunc("/events", handlers.ListEvents).Methods("GET")
+	r.HandleFunc("/events/day", handlers.EventsByDay).Methods("GET")
+	r.HandleFunc("/events/week", handlers.EventsByWeek).Methods("GET")
+	r.HandleFunc("/events/month", handlers.EventsByMonth).Methods("GET")
 
 	return r
 }

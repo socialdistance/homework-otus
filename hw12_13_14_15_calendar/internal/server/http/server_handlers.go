@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -32,12 +33,6 @@ func ResponseError(w http.ResponseWriter, code int, err error) {
 
 func NewServerHandlers(a *internalapp.App) *ServerHandlers {
 	return &ServerHandlers{app: a}
-}
-
-func (s *ServerHandlers) HelloWorld(w http.ResponseWriter, r *http.Request) {
-	response := []byte("Hello world!\n")
-	w.WriteHeader(200)
-	w.Write(response)
 }
 
 func (s *ServerHandlers) CreateEvent(w http.ResponseWriter, r *http.Request) {
@@ -130,6 +125,96 @@ func (s *ServerHandlers) ListEvents(w http.ResponseWriter, r *http.Request) {
 		ResponseError(w, http.StatusBadRequest, err)
 		return
 	}
+
+	eventDto := make([]EventDto, 0, len(events))
+	for _, t := range events {
+		eventDto = append(eventDto, CreateDto(t))
+	}
+
+	response, err := json.Marshal(eventDto)
+	if err != nil {
+		ResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(response)
+}
+
+func (s *ServerHandlers) EventsByDay(w http.ResponseWriter, r *http.Request) { //nolint:dupl
+	timeURL := r.URL.Query().Get("date")
+	start, err := time.Parse("2006-01-02", timeURL)
+	if err != nil {
+		ResponseError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	events, err := s.app.EventsByDay(r.Context(), start)
+	if err != nil {
+		ResponseError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	eventDto := make([]EventDto, 0, len(events))
+	for _, t := range events {
+		eventDto = append(eventDto, CreateDto(t))
+	}
+
+	response, err := json.Marshal(eventDto)
+	if err != nil {
+		ResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(response)
+}
+
+func (s *ServerHandlers) EventsByWeek(w http.ResponseWriter, r *http.Request) { //nolint:dupl
+	timeURL := r.URL.Query().Get("date")
+	start, err := time.Parse("2006-01-02", timeURL)
+	if err != nil {
+		ResponseError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	events, err := s.app.EventsByWeek(r.Context(), start)
+	if err != nil {
+		ResponseError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	eventDto := make([]EventDto, 0, len(events))
+	for _, t := range events {
+		eventDto = append(eventDto, CreateDto(t))
+	}
+
+	response, err := json.Marshal(eventDto)
+	if err != nil {
+		ResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(response)
+}
+
+func (s *ServerHandlers) EventsByMonth(w http.ResponseWriter, r *http.Request) {
+	timeURL := r.URL.Query().Get("date")
+	start, err := time.Parse("2006-01-02", timeURL)
+	if err != nil {
+		ResponseError(w, http.StatusBadRequest, err)
+	}
+
+	events, err := s.app.EventsByMonth(r.Context(), start)
+	if err != nil {
+		ResponseError(w, http.StatusBadRequest, err)
+		return
+	}
+
 	eventDto := make([]EventDto, 0, len(events))
 	for _, t := range events {
 		eventDto = append(eventDto, CreateDto(t))

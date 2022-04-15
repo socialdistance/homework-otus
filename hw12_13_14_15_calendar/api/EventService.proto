@@ -1,13 +1,16 @@
 syntax = "proto3";
 
 package event;
-option go_package = "./;internalgrpc";
+option go_package = "./;internalising";
 
 service EventService {
   rpc Create(Event) returns (ResponseEvent);
   rpc Update(Event) returns (ResponseEvent);
   rpc Delete(DeleteEvent) returns (ResponseEvent);
   rpc FindAll(RequestEventList) returns (ResponseEventList);
+  rpc EventsListDay(RequestEventList) returns (ResponseEventList);
+  rpc EventsListWeek(RequestEventList) returns (ResponseEventList);
+  rpc EventsListMonth(RequestEventList) returns (ResponseEventList);
 }
 
 message Event {
@@ -17,6 +20,7 @@ message Event {
   string ended = 4;
   string description = 5;
   string userID = 6;
+  string notify = 7;
 }
 
 message ResponseEvent {

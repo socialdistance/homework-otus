@@ -2,6 +2,7 @@ package sqlstorage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -28,7 +29,6 @@ func (s *Storage) Connect(ctx context.Context) error {
 	conn, err := pgx.Connect(ctx, s.url)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect database %s", err)
-		os.Exit(1)
 	}
 
 	s.conn = conn
@@ -71,8 +71,33 @@ func (s *Storage) Delete(id uuid.UUID) error {
 	return err
 }
 
+func (s *Storage) Find(id uuid.UUID) (*storage.Event, error) {
+	var event storage.Event
+	sql := `select id, title, started_at, finished_at, description, user_id, notify from events where id = $1`
+
+	err := s.conn.QueryRow(s.ctx, sql, id).Scan(
+		&event.ID,
+		&event.Title,
+		&event.Started,
+		&event.Ended,
+		&event.Description,
+		&event.UserID,
+		&event.Notify,
+	)
+
+	if err == nil {
+		return &event, nil
+	}
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+
+	return nil, fmt.Errorf("cant scan SQL result to struct %w", err)
+}
+
 func (s *Storage) FindAll() ([]storage.Event, error) {
-	events := make([]storage.Event, 0)
+	var events []storage.Event
 
 	sql := `
 		SELECT id, title, started, ended, description, user_id FROM events

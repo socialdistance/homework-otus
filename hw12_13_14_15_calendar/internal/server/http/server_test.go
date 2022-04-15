@@ -14,18 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestHelloWorld(t *testing.T) {
-	request := httptest.NewRequest("GET", "/", nil)
-	w := httptest.NewRecorder()
-
-	testHandlers := Routers(application(t))
-	testHandlers.ServeHTTP(w, request)
-
-	resp := w.Result()
-	body, _ := ioutil.ReadAll(resp.Body)
-	require.Equal(t, "Hello world!\n", string(body))
-}
-
 func TestHandlers(t *testing.T) {
 	body := bytes.NewBufferString(`{
 		"id": "a17b3f01-fbd7-40e5-8d8e-9b4cf1ef21b0",
@@ -33,7 +21,8 @@ func TestHandlers(t *testing.T) {
 		"started": "2020-10-20 12:30:00",
 		"ended": "2020-10-21 12:30:00",
 		"description": "test description",
-		"userID": "1528371b-229c-4370-839a-0571d969902a"
+		"userID": "1528371b-229c-4370-839a-0571d969902a",
+		"notify": "2020-10-19 12:30:00"
 	}`)
 
 	request := httptest.NewRequest("POST", "/create", body)
@@ -42,9 +31,9 @@ func TestHandlers(t *testing.T) {
 	testHandlers := Routers(application(t))
 	testHandlers.ServeHTTP(w, request)
 
-	response := w.Result()
+	response := w.Result() //nolint:bodyclose
 	responseBody, _ := ioutil.ReadAll(response.Body)
-	responseExcepted := `{"id":"a17b3f01-fbd7-40e5-8d8e-9b4cf1ef21b0","title":"Test title","started":"2020-10-20 12:30:00","ended":"2020-10-21 12:30:00","description":"test description","userID":"1528371b-229c-4370-839a-0571d969902a"}` //nolint:lll
+	responseExcepted := `{"id":"a17b3f01-fbd7-40e5-8d8e-9b4cf1ef21b0","title":"Test title","started":"2020-10-20 12:30:00","ended":"2020-10-21 12:30:00","description":"test description","userID":"1528371b-229c-4370-839a-0571d969902a","notify":"2020-10-19 12:30:00"}` //nolint:lll
 	require.Equal(t, responseExcepted, string(responseBody))
 
 	body = bytes.NewBufferString(`{
@@ -52,7 +41,8 @@ func TestHandlers(t *testing.T) {
 		"started": "2020-10-20 12:30:00",
 		"ended": "2020-10-21 12:30:00",
 		"description": "test description 2",
-		"userID": "1528371b-229c-4370-839a-0571d969902a"
+		"userID": "1528371b-229c-4370-839a-0571d969902a",
+		"notify": "2020-10-19 12:30:00"
 	}`)
 
 	request = httptest.NewRequest("PUT", "/events/update/a17b3f01-fbd7-40e5-8d8e-9b4cf1ef21b0", body)
@@ -60,9 +50,9 @@ func TestHandlers(t *testing.T) {
 
 	testHandlers.ServeHTTP(w, request)
 
-	response = w.Result()
+	response = w.Result() //nolint:bodyclose
 	responseBody, _ = ioutil.ReadAll(response.Body)
-	responseExcepted = `{"id":"a17b3f01-fbd7-40e5-8d8e-9b4cf1ef21b0","title":"Test title 2","started":"2020-10-20 12:30:00","ended":"2020-10-21 12:30:00","description":"test description 2","userID":"1528371b-229c-4370-839a-0571d969902a"}` //nolint:lll
+	responseExcepted = `{"id":"a17b3f01-fbd7-40e5-8d8e-9b4cf1ef21b0","title":"Test title 2","started":"2020-10-20 12:30:00","ended":"2020-10-21 12:30:00","description":"test description 2","userID":"1528371b-229c-4370-839a-0571d969902a","notify":"2020-10-19 12:30:00"}` //nolint:lll
 	require.Equal(t, responseExcepted, string(responseBody))
 
 	request = httptest.NewRequest("DELETE", "/events/delete/a17b3f01-fbd7-40e5-8d8e-9b4cf1ef21b0", body)
@@ -70,7 +60,7 @@ func TestHandlers(t *testing.T) {
 
 	testHandlers.ServeHTTP(w, request)
 
-	response = w.Result()
+	response = w.Result() //nolint:bodyclose
 	responseBody, _ = ioutil.ReadAll(response.Body)
 	responseExcepted = ""
 	require.Equal(t, responseExcepted, string(responseBody))
@@ -81,7 +71,8 @@ func TestHandlers(t *testing.T) {
 		"started": "2020-10-20 12:30:00",
 		"ended": "2020-10-21 12:30:00",
 		"description": "test description",
-		"userID": "1528371b-229c-4370-839a-0571d969902a"
+		"userID": "1528371b-229c-4370-839a-0571d969902a",
+		"notify": "2020-10-19 12:30:00"
 	}`)
 
 	requestCreate := httptest.NewRequest("POST", "/create", body)
@@ -94,9 +85,39 @@ func TestHandlers(t *testing.T) {
 
 	testHandlers.ServeHTTP(w, requestListAll)
 
-	response = w.Result()
+	response = w.Result() //nolint:bodyclose
 	responseBody, _ = ioutil.ReadAll(response.Body)
-	responseExcepted = `[{"id":"a17b3f01-fbd7-40e5-8d8e-9b4cf1ef21b0","title":"Test title","started":"2020-10-20T12:30:00Z","ended":"2020-10-21T12:30:00Z","description":"test description","userID":"1528371b-229c-4370-839a-0571d969902a"}]` // nolint:lll
+	responseExcepted = `[{"id":"a17b3f01-fbd7-40e5-8d8e-9b4cf1ef21b0","title":"Test title","started":"2020-10-20T12:30:00Z","ended":"2020-10-21T12:30:00Z","description":"test description","userID":"1528371b-229c-4370-839a-0571d969902a","notify":"2020-10-19T12:30:00Z"}]` // nolint:lll, goconst
+	require.Equal(t, responseExcepted, string(responseBody))
+
+	requestListAll = httptest.NewRequest("GET", "/events/month?date=2020-10-20", body)
+	w = httptest.NewRecorder()
+
+	testHandlers.ServeHTTP(w, requestListAll)
+
+	response = w.Result() //nolint:bodyclose
+	responseBody, _ = ioutil.ReadAll(response.Body)
+	responseExcepted = `[{"id":"a17b3f01-fbd7-40e5-8d8e-9b4cf1ef21b0","title":"Test title","started":"2020-10-20T12:30:00Z","ended":"2020-10-21T12:30:00Z","description":"test description","userID":"1528371b-229c-4370-839a-0571d969902a","notify":"2020-10-19T12:30:00Z"}]` // nolint:lll
+	require.Equal(t, responseExcepted, string(responseBody))
+
+	requestListAll = httptest.NewRequest("GET", "/events/week?date=2020-10-19", body)
+	w = httptest.NewRecorder()
+
+	testHandlers.ServeHTTP(w, requestListAll)
+
+	response = w.Result() //nolint:bodyclose
+	responseBody, _ = ioutil.ReadAll(response.Body)
+	responseExcepted = `[{"id":"a17b3f01-fbd7-40e5-8d8e-9b4cf1ef21b0","title":"Test title","started":"2020-10-20T12:30:00Z","ended":"2020-10-21T12:30:00Z","description":"test description","userID":"1528371b-229c-4370-839a-0571d969902a","notify":"2020-10-19T12:30:00Z"}]` // nolint:lll
+	require.Equal(t, responseExcepted, string(responseBody))
+
+	requestListAll = httptest.NewRequest("GET", "/events/day?date=2020-10-20", body)
+	w = httptest.NewRecorder()
+
+	testHandlers.ServeHTTP(w, requestListAll)
+
+	response = w.Result() //nolint:bodyclose
+	responseBody, _ = ioutil.ReadAll(response.Body)
+	responseExcepted = `[{"id":"a17b3f01-fbd7-40e5-8d8e-9b4cf1ef21b0","title":"Test title","started":"2020-10-20T12:30:00Z","ended":"2020-10-21T12:30:00Z","description":"test description","userID":"1528371b-229c-4370-839a-0571d969902a","notify":"2020-10-19T12:30:00Z"}]` // nolint:lll
 	require.Equal(t, responseExcepted, string(responseBody))
 }
 

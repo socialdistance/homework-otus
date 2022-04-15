@@ -12,18 +12,16 @@ import (
 func TestLogger(t *testing.T) {
 	t.Run("test debug", func(t *testing.T) {
 		file, err := os.CreateTemp("/tmp", "log")
-		if err != nil {
-			t.FailNow()
-			return
-		}
+		require.Nil(t, err)
 
 		defer os.Remove(file.Name())
 		defer file.Close()
 
-		logg, _ := New(config.LoggerConf{
+		logg, err := New(config.LoggerConf{
 			Level:    config.Debug,
 			Filename: file.Name(),
 		})
+		require.Nil(t, err)
 
 		logg.Debug("DEBUG %s", "debug")
 		logg.Info("INFO %s", "info")
@@ -39,10 +37,7 @@ func TestLogger(t *testing.T) {
 
 	t.Run("test info", func(t *testing.T) {
 		file, err := os.CreateTemp("/tmp", "log")
-		if err != nil {
-			t.FailNow()
-			return
-		}
+		require.Nil(t, err)
 
 		defer os.Remove(file.Name())
 		defer file.Close()
@@ -66,10 +61,7 @@ func TestLogger(t *testing.T) {
 
 	t.Run("test warning", func(t *testing.T) {
 		file, err := os.CreateTemp("/tmp", "log")
-		if err != nil {
-			t.FailNow()
-			return
-		}
+		require.Nil(t, err)
 
 		defer os.Remove(file.Name())
 		defer file.Close()
@@ -93,10 +85,7 @@ func TestLogger(t *testing.T) {
 
 	t.Run("test error", func(t *testing.T) {
 		file, err := os.CreateTemp("/tmp", "log")
-		if err != nil {
-			t.FailNow()
-			return
-		}
+		require.Nil(t, err)
 
 		defer os.Remove(file.Name())
 		defer file.Close()

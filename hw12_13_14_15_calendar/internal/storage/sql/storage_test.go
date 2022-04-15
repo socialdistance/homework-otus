@@ -51,12 +51,18 @@ func TestStorage(t *testing.T) {
 		}
 
 		userID := uuid.New()
-		started, err := time.Parse("2006-01-02 15:04:05", "2022-03-13 12:00:00")
+		started, err := time.Parse("2006-01-02 15:04:05", "2022-03-10 12:00:00")
 		if err != nil {
 			t.FailNow()
 			return
 		}
-		ended, err := time.Parse("2006-01-02 15:04:05", "2022-03-09 12:00:00")
+		ended, err := time.Parse("2006-01-02 15:04:05", "2022-03-11 12:00:00")
+		if err != nil {
+			t.FailNow()
+			return
+		}
+
+		notify, err := time.Parse("2006-01-02 15:04:05", "2022-03-09 12:00:00")
 		if err != nil {
 			t.FailNow()
 			return
@@ -68,6 +74,7 @@ func TestStorage(t *testing.T) {
 			ended,
 			"Description",
 			userID,
+			notify,
 		)
 
 		err = storage.Create(*event)
@@ -112,6 +119,13 @@ func TestStorage(t *testing.T) {
 			return
 		}
 		require.Len(t, saved, 0)
+
+		find, err := storage.Find(event.ID)
+		if err != nil {
+			t.Fatal()
+			return
+		}
+		require.Len(t, find, 1)
 
 		err = tx.Rollback(ctx)
 		if err != nil {
