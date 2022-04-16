@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4"
+	pgx4 "github.com/jackc/pgx/v4"
 	"github.com/socialdistance/hw12_13_14_15_calendar/internal/storage"
 )
 
 type Storage struct {
 	ctx  context.Context
-	conn *pgx.Conn
+	conn *pgx4.Conn
 	url  string
 }
 
@@ -26,7 +26,7 @@ func New(ctx context.Context, url string) *Storage {
 }
 
 func (s *Storage) Connect(ctx context.Context) error {
-	conn, err := pgx.Connect(ctx, s.url)
+	conn, err := pgx4.Connect(ctx, s.url)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect database %s", err)
 	}
@@ -89,7 +89,7 @@ func (s *Storage) Find(id uuid.UUID) (*storage.Event, error) {
 		return &event, nil
 	}
 
-	if errors.Is(err, pgx.ErrNoRows) {
+	if errors.Is(err, pgx4.ErrNoRows) {
 		return nil, nil
 	}
 
