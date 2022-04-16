@@ -1,6 +1,7 @@
 package memorystorage
 
 import (
+	"sort"
 	"sync"
 
 	"github.com/google/uuid"
@@ -10,6 +11,12 @@ import (
 type Storage struct {
 	mu     sync.RWMutex
 	events map[uuid.UUID]storage.Event
+}
+
+func New() *Storage {
+	return &Storage{
+		events: make(map[uuid.UUID]storage.Event),
+	}
 }
 
 func (s *Storage) Create(e storage.Event) error {
@@ -54,12 +61,20 @@ func (s *Storage) FindAll() ([]storage.Event, error) {
 	for _, event := range s.events {
 		events = append(events, event)
 	}
+	sort.Slice(events, func(i, j int) bool {
+		return events[i].Started.Unix() < events[j].Started.Unix()
+	})
 
 	return events, nil
 }
 
-func New() *Storage {
-	return &Storage{
-		events: make(map[uuid.UUID]storage.Event),
+func (s *Storage) Find(id uuid.UUID) (*storage.Event, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if event, ok := s.events[id]; ok {
+		return &event, nil
 	}
+
+	return nil, nil
 }

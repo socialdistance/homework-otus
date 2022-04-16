@@ -25,12 +25,19 @@ func TestStorage(t *testing.T) {
 			return
 		}
 
+		notify, err := time.Parse("2006-01-02 15:04:05", "2022-03-14 12:00:00")
+		if err != nil {
+			t.FailNow()
+			return
+		}
+
 		evt := memorystorage.NewEvent(
 			"title",
 			start,
 			end,
 			"description",
 			userID,
+			notify,
 		)
 
 		err = storage.Create(*evt)
@@ -39,9 +46,21 @@ func TestStorage(t *testing.T) {
 			return
 		}
 
-		res, _ := storage.FindAll()
+		res, err := storage.FindAll()
+		if err != nil {
+			t.FailNow()
+			return
+		}
 		require.Len(t, res, 1)
 		require.Equal(t, *evt, res[0])
+
+		result, err := storage.Find(evt.ID)
+		if err != nil {
+			t.FailNow()
+			return
+		}
+		require.Nil(t, err, nil)
+		require.Equal(t, evt, result)
 
 		evt.Title = "New event title"
 

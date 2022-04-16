@@ -4,6 +4,9 @@ import (
 	"context"
 	"net"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/socialdistance/hw12_13_14_15_calendar/internal/app"
 )
 
 type Server struct {
@@ -24,7 +27,7 @@ type Logger interface {
 type Application interface { // TODO
 }
 
-func NewServer(logger Logger, app Application, host, port string) *Server {
+func NewServer(logger Logger, app *app.App, host, port string) *Server {
 	server := &Server{
 		host:   host,
 		port:   port,
@@ -40,6 +43,21 @@ func NewServer(logger Logger, app Application, host, port string) *Server {
 	server.server = httpServ
 
 	return server
+}
+
+func Routers(app *app.App) http.Handler {
+	handlers := NewServerHandlers(app)
+
+	r := mux.NewRouter()
+	r.HandleFunc("/create", handlers.CreateEvent).Methods("POST")
+	r.HandleFunc("/events/update/{id}", handlers.UpdateEvent).Methods("PUT")
+	r.HandleFunc("/events/delete/{id}", handlers.DeleteEvent).Methods("DELETE")
+	r.HandleFunc("/events", handlers.ListEvents).Methods("GET")
+	r.HandleFunc("/events/day", handlers.EventsByDay).Methods("GET")
+	r.HandleFunc("/events/week", handlers.EventsByWeek).Methods("GET")
+	r.HandleFunc("/events/month", handlers.EventsByMonth).Methods("GET")
+
+	return r
 }
 
 func (s *Server) Start(ctx context.Context) error {

@@ -19,9 +19,10 @@ type Event struct {
 	Ended       time.Time
 	Description string
 	UserID      uuid.UUID
+	Notify      time.Time
 }
 
-func NewEvent(title string, started, ended time.Time, description string, userID uuid.UUID) *Event {
+func NewEvent(title string, started, ended time.Time, description string, userID uuid.UUID, notify time.Time) *Event {
 	return &Event{
 		ID:          uuid.New(),
 		Title:       title,
@@ -29,5 +30,6 @@ func NewEvent(title string, started, ended time.Time, description string, userID
 		Ended:       ended,
 		Description: description,
 		UserID:      userID,
+		Notify:      notify,
 	}
 }

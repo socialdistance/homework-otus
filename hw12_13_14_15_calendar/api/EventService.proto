@@ -1,7 +1,40 @@
 syntax = "proto3";
 
 package event;
+option go_package = "./;internalising";
+
+service EventService {
+  rpc Create(Event) returns (ResponseEvent);
+  rpc Update(Event) returns (ResponseEvent);
+  rpc Delete(DeleteEvent) returns (ResponseEvent);
+  rpc FindAll(RequestEventList) returns (ResponseEventList);
+  rpc EventsListDay(RequestEventList) returns (ResponseEventList);
+  rpc EventsListWeek(RequestEventList) returns (ResponseEventList);
+  rpc EventsListMonth(RequestEventList) returns (ResponseEventList);
+}
 
 message Event {
-    // TODO
+  string id = 1;
+  string title = 2;
+  string started = 3;
+  string ended = 4;
+  string description = 5;
+  string userID = 6;
+  string notify = 7;
+}
+
+message ResponseEvent {
+  bool success = 1;
+  string error = 2;
+}
+
+message DeleteEvent {
+  string id = 1;
+}
+
+message RequestEventList {
+}
+
+message ResponseEventList {
+  repeated Event event = 1;
 }

@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4"
+	pgx4 "github.com/jackc/pgx/v4"
 	sqlstorage "github.com/socialdistance/hw12_13_14_15_calendar/internal/storage"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
+	yaml3 "gopkg.in/yaml.v3"
 )
 
 const configFile = "configs/config.yaml"
@@ -29,7 +29,7 @@ func TestStorage(t *testing.T) {
 		}
 	}
 
-	err := yaml.Unmarshal(configContent, &config)
+	err := yaml3.Unmarshal(configContent, &config)
 	if err != nil {
 		t.Fatal("Failed to unmarshal config", err)
 	}
@@ -41,22 +41,28 @@ func TestStorage(t *testing.T) {
 	}
 
 	t.Run("test SQL", func(t *testing.T) {
-		tx, err := storage.conn.BeginTx(ctx, pgx.TxOptions{
-			IsoLevel:       pgx.Serializable,
-			AccessMode:     pgx.ReadWrite,
-			DeferrableMode: pgx.NotDeferrable,
+		tx, err := storage.conn.BeginTx(ctx, pgx4.TxOptions{
+			IsoLevel:       pgx4.Serializable,
+			AccessMode:     pgx4.ReadWrite,
+			DeferrableMode: pgx4.NotDeferrable,
 		})
 		if err != nil {
 			t.Fatal("Failed to connect to DB server", err)
 		}
 
 		userID := uuid.New()
-		started, err := time.Parse("2006-01-02 15:04:05", "2022-03-13 12:00:00")
+		started, err := time.Parse("2006-01-02 15:04:05", "2022-03-10 12:00:00")
 		if err != nil {
 			t.FailNow()
 			return
 		}
-		ended, err := time.Parse("2006-01-02 15:04:05", "2022-03-09 12:00:00")
+		ended, err := time.Parse("2006-01-02 15:04:05", "2022-03-11 12:00:00")
+		if err != nil {
+			t.FailNow()
+			return
+		}
+
+		notify, err := time.Parse("2006-01-02 15:04:05", "2022-03-09 12:00:00")
 		if err != nil {
 			t.FailNow()
 			return
@@ -68,6 +74,7 @@ func TestStorage(t *testing.T) {
 			ended,
 			"Description",
 			userID,
+			notify,
 		)
 
 		err = storage.Create(*event)
@@ -112,6 +119,13 @@ func TestStorage(t *testing.T) {
 			return
 		}
 		require.Len(t, saved, 0)
+
+		find, err := storage.Find(event.ID)
+		if err != nil {
+			t.Fatal()
+			return
+		}
+		require.Len(t, find, 1)
 
 		err = tx.Rollback(ctx)
 		if err != nil {
